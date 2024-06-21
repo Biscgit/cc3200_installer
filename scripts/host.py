@@ -7,16 +7,12 @@ import asyncssh
 async def run_client():
     async with asyncssh.connect(
             'localhost',
-            port=8027,
+            port=8030,
             username='user',
             client_keys=['client_key'],
             known_hosts=None,
     ) as conn:
-        print("sending")
         result = await conn.run('echo "Hello, world!"')
-        print(result.stdout, end='')
-        print(result.stderr, file=sys.stderr)
-        result = await conn.run('echo "Hello, world2!')
         print(result.stdout, end='')
         print(result.stderr, file=sys.stderr)
 
