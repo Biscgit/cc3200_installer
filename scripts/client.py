@@ -5,6 +5,9 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+host_key = open("host_key", "r").read()
+client_pub = open("client_key.pub", "r").read()
+
 
 async def handle_commands(process: asyncssh.SSHServerProcess) -> None:
     try:
@@ -25,15 +28,16 @@ async def handle_commands(process: asyncssh.SSHServerProcess) -> None:
         logger.error(f"Failed to execute command: {type(e)} {e}")
         process.stderr.write(f'Error in execution: {e}\n')
 
-    process.exit(0)
+    finally:
+        process.exit(0)
 
 
 async def run_ssh_server():
     await asyncssh.listen(
         '',
-        8027,
-        server_host_keys=['host_key'],
-        authorized_client_keys='client_key.pub',
+        8030,
+        server_host_keys=[asyncssh.import_private_key(host_key)],
+        authorized_client_keys=asyncssh.import_authorized_keys(client_pub),
         process_factory=handle_commands
     )
 
@@ -46,6 +50,7 @@ async def main():
     except (OSError, asyncssh.Error) as e:
         logger.error(f"Error in running ssh server: {e}")
         exit(1)
+
 
 if __name__ == '__main__':
     logger.info("Launching Autoinstaller!")
