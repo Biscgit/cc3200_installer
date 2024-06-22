@@ -56,11 +56,16 @@ class SSHServer(asyncssh.SSHServer):
     broadcast = BroadCaster()
     task: typing.Optional[asyncio.Task] = None
 
-    def connection_made(self, conn: asyncssh.SSHServerConnection) -> None:
-        logging.info(f"Connection from {conn.get_extra_info('peername')[0]}")
+    def auth_completed(self) -> None:
+        # only activate on successfully authentication -> for example avoid close on nmap scanning
         SSHServer.broadcast.set_connected()
 
+    def connection_made(self, conn: asyncssh.SSHServerConnection) -> None:
+        logging.info(f"Connection from {conn.get_extra_info('peername')[0]}")
+
     def connection_lost(self, exc: typing.Optional[Exception]) -> None:
+        # on disconnect the script should have finished, stopping server
+        loop.stop()
         if exc:
             logger.error(f"Closing connection with exception: {exc}")
 
@@ -116,7 +121,7 @@ async def main():
 
 
 if __name__ == '__main__':
-    logger.info("Launching Autoinstaller!")
+    logger.info("Launching Autoinstaller")
     loop = asyncio.new_event_loop()
 
     try:
