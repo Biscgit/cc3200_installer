@@ -58,7 +58,7 @@ class SSHServer(asyncssh.SSHServer):
     task: typing.Optional[asyncio.Task] = None
 
     def auth_completed(self) -> None:
-        # only activate on successfully authentication -> for example avoid close on nmap scanning
+        # only activate on successful authentication -> for example, avoid close on nmap scanning
         SSHServer.broadcast.set_connected()
 
     def connection_made(self, conn: asyncssh.SSHServerConnection) -> None:
