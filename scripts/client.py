@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 host_key = open("host_key", "r").read()
 client_pub = open("client_key.pub", "r").read()
 
-ssh_port = 8030
+ssh_port = 8022
 broadcast_port = 37021
 
 
@@ -29,7 +29,8 @@ class BroadCaster:
         broadcast_address = ('<broadcast>', broadcast_port)
         broadcast_message = json.dumps({
             "can_accept": True,
-            "ip": local_ip
+            "ip": local_ip,
+            "port": ssh_port
         })
 
         try:
