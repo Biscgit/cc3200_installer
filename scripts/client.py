@@ -5,6 +5,7 @@ import typing
 import asyncssh
 import logging
 import socket
+import socketserver
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -12,7 +13,6 @@ logger = logging.getLogger(__name__)
 host_key = open("host_key", "r").read()
 client_pub = open("client_key.pub", "r").read()
 
-ssh_port = 8022
 broadcast_port = 37021
 
 
@@ -25,6 +25,7 @@ class BroadCaster:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
         local_ip = socket.gethostbyname(socket.gethostname())
+        ssh_port = SSHServer.ssh_port
 
         broadcast_address = ('<broadcast>', broadcast_port)
         broadcast_message = json.dumps({
@@ -37,7 +38,7 @@ class BroadCaster:
             running_time = 0
             while not self._has_connected:
                 if running_time % 20 == 0:
-                    logger.info(f"Broadcasting IP: {local_ip}")
+                    logger.info(f"Broadcasting IP: {local_ip}:{ssh_port}")
                     sock.sendto(broadcast_message.encode(), broadcast_address)
 
                 await asyncio.sleep(0.1)
@@ -56,6 +57,7 @@ class BroadCaster:
 class SSHServer(asyncssh.SSHServer):
     broadcast = BroadCaster()
     task: typing.Optional[asyncio.Task] = None
+    ssh_port: typing.Optional[int] = None
 
     def auth_completed(self) -> None:
         # only activate on successful authentication -> for example, avoid close on nmap scanning
@@ -100,10 +102,14 @@ class SSHServer(asyncssh.SSHServer):
 
     @classmethod
     async def start_ssh_server(cls):
+        with socketserver.TCPServer(("localhost", 0), None) as s:  # noqa
+            port = s.server_address[1]
+            SSHServer.ssh_port = port
+
         await asyncssh.create_server(
             cls,
             '',
-            ssh_port,
+            port,
             server_host_keys=[asyncssh.import_private_key(host_key)],
             authorized_client_keys=asyncssh.import_authorized_keys(client_pub),
             process_factory=SSHServer.handle_commands
