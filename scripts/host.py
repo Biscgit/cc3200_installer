@@ -139,16 +139,63 @@ async def get_client_broadcast() -> tuple[str, int]:
 
 
 async def run_client(address: str, port: int):
-    async with asyncssh.connect(
-            address,
-            port=port,
-            username='user',
-            client_keys=[asyncssh.import_private_key(client_key)],
-            known_hosts=None,
-    ) as conn:
-        result = await conn.run('echo "Hello, world!"')
-        print(result.stdout, end='')
-        print(result.stderr, file=sys.stderr)
+    console.log("Running commands for installation:")
+    with console.status(
+            "[bold green4] Installing TonieCloud...",
+            spinner="bouncingBar"
+    ) as status:
+        async with asyncssh.connect(
+                address,
+                port=port,
+                username='user',
+                client_keys=[asyncssh.import_private_key(client_key)],
+                known_hosts=None,
+        ) as conn:
+            await asyncio.sleep(1)
+            for x in range(3):
+                command = "echo 'Hello, world!'"
+                console.log(f"Running `{command}`")
+                result = await conn.run('echo "Hello, world!"')
+                await asyncio.sleep(1)
+                # print(result.stdout, end='')
+                # print(result.stderr, file=sys.stderr)
+
+
+async def generate_scripts():
+    # generate certificates
+    with console.status(
+            "[bold green4] Generating scripts...",
+            spinner="bouncingBar"
+    ):
+        # certificates
+        console.log("Creating folder")
+        Path("./certs").mkdir(parents=True, exist_ok=True)
+        for x in ["host_key", "host_key.pub", "client_key", "client_key.pub"]:
+            if os.path.exists(f"certs/{x}"):
+                os.remove(f"certs/{x}")
+
+        console.log("Generating host certificates")
+        proc = await asyncio.create_subprocess_shell(
+            "ssh-keygen -f certs/host_key -N ''",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        await asyncio.sleep(0.5)
+        _, stderr = await proc.communicate()
+        assert stderr.decode() == ""
+
+        console.log("Generating client certificates")
+        proc = await asyncio.create_subprocess_shell(
+            "ssh-keygen -f certs/client_key -N ''",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        await asyncio.sleep(0.5)
+        _, stderr = await proc.communicate()
+        assert stderr.decode() == ""
+
+        # create certificate
+        # ToDo
 
 
 async def main():
