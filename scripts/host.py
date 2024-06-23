@@ -122,14 +122,15 @@ async def get_client_broadcast() -> tuple[str, int]:
     sock.bind(server_address)
 
     try:
-        logger.info("Waiting for client connection...")
+        await asyncio.sleep(1 - (time.time() % 1))
+        console.log("Waiting for client connection...")
 
         message, _ = await loop.run_in_executor(None, sock.recvfrom, 4096)
         body = json.loads(message)
 
         if body.get("can_accept") is True:
             data = body["ip"], body["port"]
-            logger.info(f"Found ssh client on {data[0]}:{data[1]}")
+            console.log(f"Found ssh client on {data[0]}:{data[1]}")
 
             return data
 
