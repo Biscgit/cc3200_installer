@@ -218,6 +218,10 @@ async def main():
 
     # wait for the client to connect
     client_addr = await get_client_broadcast()
+
+    if WebServer.is_running is True:
+        await WebServer.stop_server()
+
     try:
         await run_client(*client_addr)
     except (OSError, asyncssh.Error) as exc:
