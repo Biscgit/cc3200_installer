@@ -199,6 +199,24 @@ async def generate_scripts():
 
 
 async def main():
+    print_welcome()
+
+    # ask which mode user wants
+    match await setup():
+        # generate script and launch server
+        case "1":
+            await generate_scripts()
+            await WebServer.start_server()
+
+        # only generate a script
+        case "2":
+            await generate_scripts()
+
+        case _:
+            console.print("[red]invalid option[/red]\nexiting...")
+            exit(1)
+
+    # wait for the client to connect
     client_addr = await get_client_broadcast()
     try:
         await run_client(*client_addr)
