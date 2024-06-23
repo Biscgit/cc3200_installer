@@ -122,17 +122,19 @@ async def get_client_broadcast() -> tuple[str, int]:
     sock.bind(server_address)
 
     try:
-        await asyncio.sleep(1 - (time.time() % 1))
-        console.log("Waiting for client connection...")
+        with console.status("[bold green4]", spinner="bouncingBar") as status:
+            await asyncio.sleep(1 - (time.time() % 1))
+            console.log("Started client listener")
+            status.update(status="[bold green4]    Waiting for client message...")
 
-        message, _ = await loop.run_in_executor(None, sock.recvfrom, 4096)
-        body = json.loads(message)
+            message, _ = await loop.run_in_executor(None, sock.recvfrom, 4096)
+            body = json.loads(message)
 
-        if body.get("can_accept") is True:
-            data = body["ip"], body["port"]
-            console.log(f"Found ssh client on {data[0]}:{data[1]}")
+            if body.get("can_accept") is True:
+                data = body["ip"], body["port"]
+                console.log(f"Found ssh client on {data[0]}:{data[1]}")
 
-            return data
+                return data
 
     finally:
         sock.close()
@@ -141,9 +143,9 @@ async def get_client_broadcast() -> tuple[str, int]:
 async def run_client(address: str, port: int):
     console.log("Running commands for installation:")
     with console.status(
-            "[bold green4] Installing TonieCloud...",
+            "[bold green4]    Installing TonieCloud...",
             spinner="bouncingBar"
-    ) as status:
+    ):
         async with asyncssh.connect(
                 address,
                 port=port,
@@ -164,7 +166,7 @@ async def run_client(address: str, port: int):
 async def generate_scripts():
     # generate certificates
     with console.status(
-            "[bold green4] Generating scripts...",
+            "[bold green4]    Generating scripts...",
             spinner="bouncingBar"
     ):
         # certificates
