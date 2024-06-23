@@ -196,7 +196,7 @@ async def generate_scripts():
         _, stderr = await proc.communicate()
         assert stderr.decode() == ""
 
-        # create certificate
+        # generate script
         # ToDo
 
 
@@ -204,19 +204,21 @@ async def main():
     print_welcome()
 
     # ask which mode user wants
-    match await setup():
+    option = await setup()
+    console.print("\nStarting installation", style="bold steel_blue1")
+
+    if option == "1":
         # generate script and launch server
-        case "1":
-            await generate_scripts()
-            await WebServer.start_server()
+        await generate_scripts()
+        await WebServer.start_server()
 
+    elif option == "2":
         # only generate a script
-        case "2":
-            await generate_scripts()
+        await generate_scripts()
 
-        case _:
-            console.print("[red]invalid option[/red]\nexiting...")
-            exit(1)
+    else:
+        console.print("[red]invalid option[/red]\nexiting...")
+        exit(1)
 
     # wait for the client to connect
     client_addr = await get_client_broadcast()
