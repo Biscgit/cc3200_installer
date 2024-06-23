@@ -111,7 +111,7 @@ class WebServer:
             WebServer.runner = None
 
         WebServer.is_running = False
-        logger.info("Terminated and cleaned up webserver")
+        console.log("Terminated and cleaned up webserver")
 
 
 async def get_client_broadcast() -> tuple[str, int]:
@@ -229,7 +229,7 @@ async def main():
 
 
 if __name__ == '__main__':
-    logger.info("Launching Autoinstaller")
+    console.log("Welcome!")
     loop = asyncio.new_event_loop()
 
     try:
@@ -238,5 +238,5 @@ if __name__ == '__main__':
     finally:
         loop.close()
 
-    logger.info("Programm gracefully finished")
+    console.log("Programm finished")
     exit(0)
