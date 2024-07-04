@@ -16,8 +16,6 @@ import os
 
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-client_key = open("client_key", "r").read()
 console = Console()
 
 broadcast_port = 37021
@@ -142,6 +140,10 @@ async def get_client_broadcast() -> tuple[str, int]:
 
 async def run_client(address: str, port: int):
     console.log("Running commands for installation:")
+
+    async with aiofiles.open("certs/client_key", "r") as file:
+        client_key = await file.read()
+
     with console.status(
             "[bold green4]    Installing TonieCloud...",
             spinner="bouncingBar"
