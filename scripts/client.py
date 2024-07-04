@@ -10,8 +10,10 @@ import socketserver
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-host_key = open("host_key", "r").read()
-client_pub = open("client_key.pub", "r").read()
+# host_key = open("host_key", "r").read()
+# client_pub = open("client_key.pub", "r").read()
+host_key = [[]]
+client_pub = [[]]
 
 broadcast_port = 37021
 
