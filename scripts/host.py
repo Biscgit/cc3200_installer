@@ -64,7 +64,7 @@ class WebServer:
     async def download_script(request: web.Request):
         console.log(f"Request for download from host: {request.headers.get('Host')}")
 
-        path = "client.py"
+        path = "templates/client.py"
         headers = {'Content-Disposition': 'attachment; filename="run.sh"'}
 
         return web.FileResponse(path, headers=headers)
@@ -214,7 +214,7 @@ async def generate_client():
         client_pub = await f.read()
         client_pub = client_pub.rstrip("\n")
 
-    async with aiofiles.open("client.py", "r") as file:
+    async with aiofiles.open("templates/client.py", "r") as file:
         template = await file.read()
 
         # insert keys
