@@ -40,7 +40,7 @@ class BroadCaster:
             running_time = 0
             while not self._has_connected:
                 if running_time % 20 == 0:
-                    logger.info(f"Broadcasting IP: {local_ip}:{ssh_port}")
+                    logger.info(f"Broadcasting SSH address: {local_ip}:{ssh_port} on port {broadcast_port}")
                     sock.sendto(broadcast_message.encode(), broadcast_address)
 
                 await asyncio.sleep(0.1)
