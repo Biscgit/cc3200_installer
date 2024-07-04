@@ -4,6 +4,7 @@ import time
 
 import asyncssh
 from aiohttp import web
+import aiofiles
 import logging
 from pathlib import Path
 import rich
@@ -44,7 +45,9 @@ async def setup() -> str:
         "[bold][1] (recommended)[/bold]:\n"
         "Easy script deploy\n"
         "[bold][2][/bold]:\n"
-        "I can deploy the script on the server on my own\n\n"
+        "I can deploy the script on the server on my own\n"
+        "[bold]\[q][/bold]:\n"  # noqa
+        "Exist installation script\n\n"
         "[bold]Enter here[/bold] (default 1):",
         end=" "
     )
@@ -217,6 +220,10 @@ async def main():
     elif option == "2":
         # only generate a script
         await generate_scripts()
+
+    elif option == "q":
+        console.log("Existing...")
+        exit(0)
 
     else:
         console.print("[red]invalid option[/red]\nexiting...")
