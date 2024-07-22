@@ -180,7 +180,8 @@ async def run_client(address: str, port: int):
                 console.log("Docker not found. Installing...")
                 commands = [
                     # remove false packages
-                    "for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done",
+                    "for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; "
+                    "do sudo apt-get remove $pkg; done",
                     # add repo
                     "sudo apt-get update",
                     "sudo apt-get install -y ca-certificates curl",
@@ -194,7 +195,8 @@ async def run_client(address: str, port: int):
                     sudo tee /etc/apt/sources.list.d/docker.list > /dev/null""",
                     "sudo apt-get update",
                     # install docker
-                    "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
+                    "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin "
+                    "docker-compose-plugin",
                 ]
 
                 for c in commands:
