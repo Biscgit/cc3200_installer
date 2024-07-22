@@ -142,7 +142,7 @@ async def get_client_broadcast() -> tuple[str, int]:
 
 
 async def run_client(address: str, port: int):
-    console.log("Running commands for installation:")
+    console.log("Running commands for installation")
 
     async with aiofiles.open("certs/client_key", "r") as file:
         client_key = await file.read()
@@ -159,13 +159,54 @@ async def run_client(address: str, port: int):
                 known_hosts=None,
         ) as conn:
             await asyncio.sleep(1)
-            for x in range(3):
-                command = "echo 'Hello, world!'"
-                console.log(f"Running `{command}`")
-                result = await conn.run('echo "Hello, world!"')
-                await asyncio.sleep(1)
-                # print(result.stdout, end='')
-                # print(result.stderr, file=sys.stderr)
+
+            async def run_command(command: str, log: str = None, fail_all: bool = True) -> asyncssh.SSHCompletedProcess:
+                if log:
+                    console.log(log)
+
+                result = await conn.run(command)
+
+                if result.stderr and fail_all:
+                    console.log(f"ERROR: {result.stderr.decode()}")
+                    console.log("Exiting programm...")
+                    exit(1)
+
+                return result
+
+            await run_command("ping -c 1 duckduckgo.com", log="Checking internet connection")
+            res = await run_command("sudo docker -v", log="Checking docker")
+
+            if "command not found" in res.stdout:
+                console.log("Docker not found. Installing...")
+                commands = [
+                    # remove false packages
+                    "for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done",
+                    # add repo
+                    "sudo apt-get update",
+                    "sudo apt-get install -y ca-certificates curl",
+                    "sudo install -m 0755 -d /etc/apt/keyrings",
+                    "sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc",
+                    "sudo chmod a+r /etc/apt/keyrings/docker.asc",
+                    # setup repo
+                    r"""echo \
+                    "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+                    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+                    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null""",
+                    "sudo apt-get update",
+                    # install docker
+                    "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
+                ]
+
+                for c in commands:
+                    await run_command(c, log=f"Running `{c}`")
+
+                res = await run_command("sudo docker -v", log="Checking docker")
+                if "command not found" in res.stdout:
+                    console.log("Failed to install docker. Please check manually")
+                    console.log("Exiting...")
+                    exit(1)
+
+                console.log("Successfully installed docker")
 
 
 async def generate_certs():
