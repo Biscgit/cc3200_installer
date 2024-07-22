@@ -64,7 +64,7 @@ class WebServer:
     async def download_script(request: web.Request):
         console.log(f"Request for download from host: {request.headers.get('Host')}")
 
-        path = "templates/client.py"
+        path = "out/client.sh"
         headers = {'Content-Disposition': 'attachment; filename="run.sh"'}
 
         return web.FileResponse(path, headers=headers)
