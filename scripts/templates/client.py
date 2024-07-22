@@ -89,10 +89,12 @@ class SSHServer(asyncssh.SSHServer):
             )
             stdout, stderr = await proc.communicate()
             if stdout:
-                logger.info(f"Command: `{process.command}` with stdout: {stdout.decode().rstrip('\n')}")
+                out = stdout.decode().rstrip('\n')
+                logger.info(f"Command: `{process.command}` with stdout: {out}")
                 process.stdout.write(stdout.decode())
             if stderr:
-                logger.warning(f"`{process.command}` stderr: {stderr.decode().rstrip('\n')}")
+                err = stderr.decode().rstrip('\n')
+                logger.warning(f"`{process.command}` stderr: {err}")
                 process.stdout.write(stderr.decode())
 
         except Exception as e:
