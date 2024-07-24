@@ -158,8 +158,6 @@ async def run_client(address: str, port: int):
                 client_keys=[asyncssh.import_private_key(client_key)],
                 known_hosts=None,
         ) as conn:
-            await asyncio.sleep(1)
-
             async def run_command(command: str, log: str = None, fail_all: bool = True) -> asyncssh.SSHCompletedProcess:
                 if log:
                     console.log(log)
@@ -167,7 +165,7 @@ async def run_client(address: str, port: int):
                 result = await conn.run(command)
 
                 if result.stderr and fail_all:
-                    console.log(f"ERROR: {result.stderr.decode()}")
+                    console.log(f"ERROR: {result.stderr}")
                     console.log("Exiting programm...")
                     exit(1)
 
