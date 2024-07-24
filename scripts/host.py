@@ -208,6 +208,50 @@ async def run_client(address: str, port: int):
 
                 console.log("Successfully installed docker")
 
+            console.log("Installing TeddyCloud & Web Interface")
+            #  await run_command("DIRECTORY INTO teddy_cloud")
+            await run_command("curl -o docker-compose.yaml -s https://raw.githubusercontent.com/"
+                              "toniebox-reverse-engineering/teddycloud/master/docker/docker-compose.yaml")
+
+            await run_command('sed -i "7s/# //" "docker-compose.yaml"')
+            await run_command('sed -i "8s/#//" "docker-compose.yaml"')
+            await run_command('sed -i "9s/#//" "docker-compose.yaml"')
+            await run_command('sed -i "1d" docker-compose.yaml')
+
+            console.log("Starting TeddyCloud")
+            await run_command("sudo docker compose up -d --quiet-pull")
+
+            async with aiohttp.ClientSession() as s:
+                max_tries = 60
+
+                while max_tries > 0:
+                    try:
+                        async with s.get(f"http://{address}") as r:
+                            text = await r.text()
+                            if "TeddyCloud administration interface" in text:
+                                console.log("Cloud is running")
+                                console.log(f"Check: http://{address}/web")
+                                break
+
+                    except (aiohttp.InvalidURL, aiohttp.ClientConnectionError):
+                        await asyncio.sleep(3)
+                        max_tries -= 1
+
+                else:
+                    console.log("Failed to start cloud within 120 seconds. Please check manually")
+                    console.log("Exiting...")
+                    exit(1)
+
+                console.log("Exchanging certificates")
+                await run_command("sudo docker cp teddycloud:/teddycloud/certs/server/ca.der ca.der")
+                result = await run_command("cat ca.der")
+
+                async with aiofiles.open("out/ca.der", "wb") as file:
+                    server_cert = bytes.fromhex(result.stdout)
+                    await file.write(server_cert)
+
+                    console.log("Saved server certificate to `out/ca.der`")
+
 
 async def generate_certs():
     for x in ["host_key", "host_key.pub", "client_key", "client_key.pub"]:
