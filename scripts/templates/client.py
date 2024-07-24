@@ -1,5 +1,7 @@
 import asyncio
 import json
+import os
+import pathlib
 import typing
 
 import asyncssh
@@ -60,6 +62,7 @@ class SSHServer(asyncssh.SSHServer):
     broadcast = BroadCaster()
     task: typing.Optional[asyncio.Task] = None
     ssh_port: typing.Optional[int] = None
+    current_folder = pathlib.Path.cwd()
 
     def auth_completed(self) -> None:
         # only activate on successful authentication -> for example, avoid close on nmap scanning
@@ -75,6 +78,25 @@ class SSHServer(asyncssh.SSHServer):
             logger.error(f"Closing connection with exception: {exc}")
 
     @staticmethod
+    def change_location(command: str) -> None:
+        split = command.strip("DIRECTORY").strip(" ").lower().split(" ")
+
+        if split[0] == "up":
+            SSHServer.current_folder = SSHServer.current_folder.parent
+
+        elif split[0] == "into":
+            new_folder = split[1]
+            SSHServer.current_folder /= new_folder
+
+            if not os.path.exists(SSHServer.current_folder):
+                os.makedirs(SSHServer.current_folder, exist_ok=True)
+
+        else:
+            raise Exception("Invalid option passed")
+
+        os.chdir(SSHServer.current_folder)
+
+    @staticmethod
     async def handle_commands(process: asyncssh.SSHServerProcess) -> None:
         # synchronize first connection with socket
         if SSHServer.task:
@@ -82,20 +104,39 @@ class SSHServer(asyncssh.SSHServer):
             SSHServer.task = None
 
         try:
+            if process.command.startswith("DIRECTORY"):
+                try:
+                    SSHServer.change_location(process.command)
+                    process.stdout.write(f"Current location: {SSHServer.current_folder}")
+                    process.exit(0)
+
+                except Exception as e:
+                    process.stderr.write(f"Failed to change directories: {e}")
+                    process.exit(1)
+
+                finally:
+                    return
+
             proc = await asyncio.create_subprocess_shell(
                 process.command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
             stdout, stderr = await proc.communicate()
+
             if stdout:
-                out = stdout.decode().rstrip('\n')
-                logger.info(f"Command: `{process.command}` with stdout: {out}")
-                process.stdout.write(stdout.decode())
+                try:
+                    out = stdout.decode().rstrip('\n')
+                    logger.info(f"Command: `{process.command}` with stdout: {out}")
+                except UnicodeDecodeError:
+                    out = stdout.hex()
+
+                process.stdout.write(out)
+
             if stderr:
                 err = stderr.decode().rstrip('\n')
                 logger.warning(f"`{process.command}` stderr: {err}")
-                process.stdout.write(stderr.decode())
+                process.stdout.write(err)
 
         except Exception as e:
             logger.error(f"Failed to execute command: {type(e)} {e}")
