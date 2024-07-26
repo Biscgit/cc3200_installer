@@ -153,8 +153,8 @@ class SSHServer(asyncssh.SSHServer):
             cls,
             '',
             port,
-            server_host_keys=[asyncssh.import_private_key(host_key)],
-            authorized_client_keys=asyncssh.import_authorized_keys(client_pub),
+            server_host_keys=[asyncssh.import_private_key(str(host_key))],
+            authorized_client_keys=asyncssh.import_authorized_keys(str(client_pub)),
             process_factory=SSHServer.handle_commands
         )
         SSHServer.task = asyncio.create_task(SSHServer.broadcast.cast_script_up())
