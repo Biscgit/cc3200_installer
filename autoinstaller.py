@@ -230,6 +230,32 @@ async def get_usb_port() -> typing.Optional[str]:
     return None
 
 
+async def run_cc_command(command: str, error_msg: str, last_command: bool = True) -> bool:
+    try:
+        await loop.run_in_executor(
+            None,
+            cc.main,
+            command.split(" "),
+            console,
+            'cc3200tool.cc3200tool.cc'
+        )
+
+    except cc.ExitException as e:
+        code = e.__str__()
+        console.error(f"{error_msg} Errorcode {code}")
+        return False
+
+    else:
+        return True
+
+    finally:
+        if last_command:
+            console.print(
+                "You can now disconnect your device.\n",
+                style="bold steel_blue1",
+            )
+
+
 async def dump_certificates(path: str) -> bool:
     console.print(
         "\nConnect the Toniebox and press enter to continue...",
@@ -254,28 +280,7 @@ async def dump_certificates(path: str) -> bool:
             f"read_file /cert/private.der {folder}private.der"
         )
 
-        try:
-            await loop.run_in_executor(
-                None,
-                cc.main,
-                command.split(" "),
-                console,
-                'cc3200tool.cc3200tool.cc'
-            )
-
-        except cc.ExitException as e:
-            code = e.__str__()
-            console.error(f"Failed to read files from device. Code {code}")
-            return False
-
-        else:
-            return True
-
-        finally:
-            console.print(
-                "You can now disconnect your device.\n",
-                style="bold steel_blue1",
-            )
+        return await run_cc_command(command, "Failed to read certificates from device.")
 
 
 class WebServer:
