@@ -52,13 +52,13 @@ class ConsoleLogger(Console):
 console = ConsoleLogger()
 broadcast_port = 37021
 
-logo = r"""
+logo = r"""[bold][white]
    _         _         _____           _   
   /_\  _   _| |_ ___   \_   \_ __  ___| |_ 
  //_\\| | | | __/ _ \   / /\/ '_ \/ __| __|
 /  _  \ |_| | || (_) /\/ /_ | | | \__ \ |_ 
-\_/ \_/\__,_|\__\___/\____/ |_| |_|___/\__|   
--==--==--==--==--==--==--==- by Biscgit -==-                                       
+\_/ \_/\__,_|\__\___/\____/ |_| |_|___/\__| [/white]  
+─══───══───══───══───══───══ [orange_red1]by Biscgit[/orange_red1] ══─[/bold]                                      
 """
 
 circuit = r"""
