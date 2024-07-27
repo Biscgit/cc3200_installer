@@ -347,13 +347,13 @@ async def get_client_broadcast() -> tuple[str, int]:
 async def run_client(address: str, port: int):
     console.info("Running commands for installation")
 
-    async with aiofiles.open("certs/client_key", "r") as file:
+    async with aiofiles.open("./certs/ssh/client_key", "r") as file:
         client_key = await file.read()
 
     with console.status(
             "[bold green4]    Installing TonieCloud...",
             spinner="bouncingBar"
-    ):
+    ) as status:
         async with asyncssh.connect(
                 address,
                 port=port,
@@ -451,23 +451,26 @@ async def run_client(address: str, port: int):
             await run_command("sudo docker cp teddycloud:/teddycloud/certs/server/ca.der ca.der")
             result = await run_command("cat ca.der")
 
-                async with aiofiles.open("out/ca.der", "wb") as file:
-                    server_cert = bytes.fromhex(result.stdout)
-                    await file.write(server_cert)
+            folder = "./certs/cloud/"
+            os.makedirs(folder, exist_ok=True)
+            async with aiofiles.open(f"{folder}ca.der", "wb") as file:
+                server_cert = bytes.fromhex(result.stdout)
+                await file.write(server_cert)
 
                     console.log("Saved server certificate to `out/ca.der`")
 
 
 async def generate_certs():
+    base_folder = "./certs/ssh/"
     for x in ["host_key", "host_key.pub", "client_key", "client_key.pub"]:
-        if os.path.exists(f"certs/{x}"):
-            os.remove(f"certs/{x}")
+        if os.path.exists(f"{base_folder}{x}"):
+            os.remove(f"certs/ssh/{x}")
 
     console.info("Generating host certificates")
     task = asyncio.create_task(asyncio.sleep(0.5))
 
     proc = await asyncio.create_subprocess_shell(
-        "ssh-keygen -f certs/host_key -N ''",
+        f"ssh-keygen -f {base_folder}host_key -N ''",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -479,7 +482,7 @@ async def generate_certs():
     task = asyncio.create_task(asyncio.sleep(0.5))
 
     proc = await asyncio.create_subprocess_shell(
-        "ssh-keygen -f certs/client_key -N ''",
+        f"ssh-keygen -f {base_folder}client_key -N ''",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -489,6 +492,7 @@ async def generate_certs():
 
 
 async def generate_client():
+    ssh_certs = "./certs/ssh/"
     for x in ["client.sh"]:
         if os.path.exists(f"out/{x}"):
             os.remove(f"out/{x}")
@@ -496,11 +500,11 @@ async def generate_client():
     console.info("Generating installer script")
     task = asyncio.create_task(asyncio.sleep(0.5))
 
-    async with aiofiles.open("certs/host_key", "r") as f:
+    async with aiofiles.open(f"{ssh_certs}host_key", "r") as f:
         host_key = await f.read()
         host_key = host_key.rstrip("\n")
 
-    async with aiofiles.open("certs/client_key.pub", "r") as f:
+    async with aiofiles.open(f"{ssh_certs}client_key.pub", "r") as f:
         client_pub = await f.read()
         client_pub = client_pub.rstrip("\n")
 
