@@ -30,3 +30,6 @@ python3 autoinstaller.py
 ## Other tools
 Some features depend on my custom implementation of the cc3200tool at Biscgit/cc3200tool.
 That library will be automatically downloaded when required after a prompt.
+
+## Disclaimer
+NO WARANTIES GIVEN ON ANYTHING PROVIDED. USE AT OWN RISK!
