@@ -122,7 +122,25 @@ async def setup() -> str:
         return "q"
 
 
+last_usb: typing.Optional[str] = None
+
+
 async def get_usb_port() -> typing.Optional[str]:
+    global last_usb
+    if last_usb:
+        console.print(
+            f"\nPreviously selected device on `{last_usb}`. "
+            "[bold]Use that? [[green4]Y[/green4]/[red3]n[/red3]] [/bold]",
+            end=""
+        )
+        choice = await loop.run_in_executor(None, input)
+        if choice.lower() == "y" or choice == "":
+            return last_usb
+
+        if choice.lower() != "n":
+            console.error(f"Invalid option: {choice}\n")
+            return None
+
     console.print(
         "\nConnect the firmware cable to your computer and press enter to continue...",
         style="bold steel_blue1",
