@@ -175,7 +175,7 @@ async def get_usb_port() -> typing.Optional[str]:
         dev_path = devices[int(user_input) - 1]
 
     except (IndexError, TypeError):
-        console.print("Invalid option", style="bold red")
+        console.print("Invalid option\n", style="bold red")
         return
 
     except KeyboardInterrupt:
@@ -290,6 +290,8 @@ class WebServer:
         with socketserver.TCPServer(("localhost", 0), None) as s:  # noqa
             _, port = s.server_address
 
+        port = 56123
+
         server = web.TCPSite(runner, ip_address, port)
         WebServer.server = server
         await server.start()
@@ -347,7 +349,7 @@ async def get_client_broadcast() -> tuple[str, int]:
 async def run_client(address: str, port: int):
     console.info("Running commands for installation")
 
-    async with aiofiles.open("./certs/ssh/client_key", "r") as file:
+    async with aiofiles.open("certs/ssh/client_key", "r") as file:
         client_key = await file.read()
 
     with console.status(
@@ -459,7 +461,7 @@ async def run_client(address: str, port: int):
 
             await run_command(f"rm ca.der")
 
-            console.info(f"Transferred certificate to `{folder}ca.der`")
+            console.info(f"Fetched certificate `{folder}ca.der`")
 
             folder = "./certs/box/"
             while True:
@@ -602,7 +604,7 @@ async def generate_scripts():
             spinner="bouncingBar"
     ):
         console.info("Creating folders")
-        Path("./certs/ssh").mkdir(parents=True, exist_ok=True)
+        Path("certs/ssh").mkdir(parents=True, exist_ok=True)
         Path("./out").mkdir(parents=True, exist_ok=True)
 
         await generate_certs()
