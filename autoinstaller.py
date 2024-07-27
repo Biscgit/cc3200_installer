@@ -64,21 +64,22 @@ logo = r"""[bold][white]
 """
 
 circuit = r"""
-  [bold]How to connect the cable's pins to your uart usb adapter[/bold] (TC2050) 
+   [bold]How to connect the cable's pins to your uart usb adapter[/bold] 
     
     
-[medium_purple4]                       ╭───────────────────────  [bold]GND[/medium_purple4][/bold]
-[yellow1]                 ╭─────[/yellow1][medium_purple4]│[/medium_purple4][yellow1]──┬────────────────────  [bold]3V3[/yellow1][/bold]     
-[yellow1]                 │[/yellow1]     [medium_purple4]│[/medium_purple4]  [yellow1]│[/yellow1]  [deep_sky_blue1]╭─────────────────  [bold]RXD[/deep_sky_blue1][/bold]                  
-[yellow1]                 │[/yellow1]     [medium_purple4]│[/medium_purple4]  [yellow1]│[/yellow1]  [deep_sky_blue1]│[/deep_sky_blue1]
-              ╔══════🭷🭷🭷🭷🭷══════╗
-              ║ [bold] [yellow1]🯱[/yellow1]  [grey58]🯳[/grey58]  [medium_purple4]🯵[/medium_purple4]  [yellow1]🯷[/yellow1]  [deep_sky_blue1]🯹[/deep_sky_blue1] [/bold] ║              [bold]TC2050-[/bold]
-              ║                 ╟──────────── [bold]Connector[/bold]
-              ║ [bold] [grey58]🯲  🯴  🯶[/grey58]  [spring_green3]🯸[/spring_green3] [deep_pink2]🯱︎🯰[/deep_pink2] [/bold] ║               [bold]Head[/bold]
-              ╚═════════════════╝
-                          [spring_green3]│[/spring_green3]  [deep_pink2]│[/deep_pink2]
-                          [spring_green3]│[/spring_green3]  [deep_pink2]╰─────────────────  [bold]TXD[/deep_pink2][/bold]
-[spring_green3]                          ╰────────────────────  [bold]DTR[/spring_green3][/bold]
+[medium_purple4]                    ╭───────────────────────  [bold]GND[/medium_purple4][/bold]
+[yellow1]              ╭─────[/yellow1][medium_purple4]│[/medium_purple4][yellow1]──┬────────────────────  [bold]3V3[/yellow1][/bold]     
+[yellow1]              │[/yellow1]     [medium_purple4]│[/medium_purple4]  [yellow1]│[/yellow1]  [deep_sky_blue1]╭─────────────────  [bold]RXD[/deep_sky_blue1][/bold]                  
+[yellow1]              │[/yellow1]     [medium_purple4]│[/medium_purple4]  [yellow1]│[/yellow1]  [deep_sky_blue1]│[/deep_sky_blue1]
+           ╔══════🭷🭷🭷🭷🭷══════╗
+           ║ [bold] [yellow1]🯱[/yellow1]  [grey58]🯳[/grey58]  [medium_purple4]🯵[/medium_purple4]  [yellow1]🯷[/yellow1]  [deep_sky_blue1]🯹[/deep_sky_blue1] [/bold] ║              [bold]TC2050-[/bold]
+           ║                 ╟──────────── [bold]Connector[/bold]
+           ║ [bold] [grey58]🯲  🯴  🯶[/grey58]  [spring_green3]🯸[/spring_green3] [deep_pink2]🯱︎🯰[/deep_pink2] [/bold] ║               [bold]Head[/bold]
+           ╚═════════════════╝
+                       [spring_green3]│[/spring_green3]  [deep_pink2]│[/deep_pink2]
+                       [spring_green3]│[/spring_green3]  [deep_pink2]╰─────────────────  [bold]TXD[/deep_pink2][/bold]
+[spring_green3]                       ╰────────────────────  [bold]DTR[/spring_green3][/bold]
+
 """
 
 
