@@ -120,6 +120,144 @@ async def setup() -> str:
         return "q"
 
 
+async def get_usb_port() -> typing.Optional[str]:
+    console.print(
+        "\nConnect the firmware cable to your computer and press enter to continue...",
+        style="bold steel_blue1",
+        end=" ",
+    )
+    await loop.run_in_executor(None, input)
+
+    console.info("Searching for usb devices")
+    proc = await asyncio.create_subprocess_shell(
+        "lsusb",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await proc.communicate()
+
+    console.print(
+        "\nSelect the device in the list below",
+        style="bold steel_blue1",
+    )
+
+    devices = []
+    default = None
+
+    for line in stdout.decode().splitlines():
+        *parts, name = line.split(" ", maxsplit=6)
+
+        if "Linux Foundation" in name:
+            continue
+
+        path = f"/dev/bus/usb/{parts[1]}/{parts[3][:-1]}"
+        devices.append(path)
+
+        index = len(devices)
+        is_default = False
+
+        if default is None and "uart" in name.lower():
+            default = index
+            is_default = True
+
+        console.print(
+            f"[bold][{index}][/bold] {name}",
+            style="bold green" if is_default else "",
+        )
+
+    if not devices:
+        console.print("No devices found", style="bold red")
+        return None
+
+    console.print(f"[bold]Enter here[/bold] (default {default}):", end=" ")
+    try:
+        user_input = await loop.run_in_executor(None, input) or default.__str__()
+        dev_path = devices[int(user_input) - 1]
+
+    except (IndexError, TypeError):
+        console.print("Invalid option", style="bold red")
+        return
+
+    except KeyboardInterrupt:
+        return
+
+    # from dev path to /dev/tty
+    console.info("Looking for corresponding serial port")
+    proc = await asyncio.create_subprocess_shell(
+        f"udevadm info --name={dev_path} | grep DEVPATH",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, _ = await proc.communicate()
+    base_device = stdout.decode().split("=")[1].strip()
+
+    ttys = [x for x in os.listdir("/dev/") if x.startswith("ttyUSB")]
+    for tty in ttys:
+        device_path = f"/dev/{tty}"
+        proc = await asyncio.create_subprocess_shell(
+            f"udevadm info --name={device_path} | grep DEVPATH",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, _ = await proc.communicate()
+        device_name = stdout.decode().split("=")[1].strip()
+
+        if device_name.startswith(base_device):
+            console.info(f"Found serial port {device_path} for {dev_path}")
+            return device_path
+
+    console.print("Device could not be found on serial ports", style="bold red")
+    return None
+
+
+async def dump_certificates(path: str) -> bool:
+    console.print(
+        "\nConnect the Toniebox and press enter to continue...",
+        style="bold steel_blue1",
+        end=" ",
+    )
+    await loop.run_in_executor(None, input)
+    with console.status(
+            "[bold green4]    Dumping files using modified cc3200tool",
+            spinner="bouncingBar"
+    ):
+        console.info("Creating dump folder")
+        folder = "./certs/box/"
+        os.makedirs(folder, exist_ok=True)
+
+        console.info("Dumping certificates")
+        command = (
+            f"-p {path} "
+            f"--reset dtr "
+            f"read_file /cert/ca.der {folder}ca.der "
+            f"read_file /cert/client.der {folder}client.der "
+            f"read_file /cert/private.der {folder}private.der"
+        )
+
+        try:
+            await loop.run_in_executor(
+                None,
+                cc.main,
+                command.split(" "),
+                console,
+                'cc3200tool.cc3200tool.cc'
+            )
+
+        except cc.ExitException as e:
+            code = e.__str__()
+            console.error(f"Failed to read files from device. Code {code}")
+            return False
+
+        else:
+            return True
+
+        finally:
+            console.print(
+                "You can now disconnect your device.\n",
+                style="bold steel_blue1",
+            )
+
+
 class WebServer:
     runner: web.AppRunner | None = None
     server: web.TCPSite | None = None
