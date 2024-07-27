@@ -194,7 +194,7 @@ async def get_usb_port() -> typing.Optional[str]:
         user_input = await loop.run_in_executor(None, input) or default.__str__()
         dev_path = devices[int(user_input) - 1]
 
-    except (IndexError, TypeError):
+    except (IndexError, TypeError, ValueError):
         console.print("Invalid option\n", style="bold red")
         return
 
