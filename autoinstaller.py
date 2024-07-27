@@ -100,19 +100,21 @@ async def print_description():
 
 async def setup() -> str:
     can_dump = "grey42" if cc is None else "grey82"
+    number_color = "grey42" if cc is None else "steel_blue1"
+
     console.print(
         "[bold steel_blue1]Choose an Option to continue:[/bold steel_blue1]\n"
-        f"[{can_dump}][bold](1)[/bold] "
+        f" [{can_dump}][bold]([{number_color}]1[/{number_color}])[/bold] "
         f"Dump certificates from TonieBox[/{can_dump}]\n"
-        "[grey82][bold](2)[/bold] "
+        " [grey82][bold]([steel_blue1]2[/steel_blue1])[/bold] "
         "Launch connector helper (TC2050)\n"
-        "[bold](3)[/bold] "
+        " [bold]([steel_blue1]3[/steel_blue1])[/bold] "
         "Easy cloud deploy\n"
-        "[bold](4)[/bold] "
+        " [bold]([steel_blue1]4[/steel_blue1])[/bold] "
         "Manual cloud deploy\n"
-        f"[{can_dump}][bold](5)[/bold] "
+        f" [{can_dump}][bold]([{number_color}]5[/{number_color}])[/bold] "
         f"Flash cloud certificate[/{can_dump}]\n"
-        "[bold](Q)[/bold] "
+        " [bold]([steel_blue1]Q[/steel_blue1])[/bold] "
         "Exit installation script[/grey82]\n\n"
         "[bold]Enter here[/bold] (default q):",
         end=" "
