@@ -290,7 +290,7 @@ class WebServer:
         with socketserver.TCPServer(("localhost", 0), None) as s:  # noqa
             _, port = s.server_address
 
-        port = 56123
+        # port = 56123
 
         server = web.TCPSite(runner, ip_address, port)
         WebServer.server = server
@@ -488,7 +488,7 @@ async def run_client(address: str, port: int):
                     "\n∘︎ ".join(missing) + "\n",
                     "Copy missing certificates to `./certs/box/` and press enter.\n"
                     "Type [bold]N[/bold] to finish setup without client certificates",
-                    end=" "
+                    end="",
                 )
                 choice = await loop.run_in_executor(None, input)
 
@@ -639,7 +639,7 @@ async def main():
                     "\n[bold yellow1]This cannot be executed because the required custom cc3200tool "
                     "is not installed![/bold yellow1]\n"
                     "[bold]Do you want to download it? [[green4]y[/green4]/[red3]N[/red3]] [/bold]",
-                    end=" "
+                    end=""
                 )
                 choice = await loop.run_in_executor(None, input)
                 if choice.lower() == "y":
