@@ -538,35 +538,27 @@ async def run_client(address: str, port: int):
             console.print("Finished installation\n", style="bold steel_blue1")
 
 
+async def keygen(base_folder: str, name: str):
+    task = asyncio.create_task(asyncio.sleep(0.5))
+    proc = await asyncio.create_subprocess_shell(
+        f"ssh-keygen -f {base_folder}{name} -N ''",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    _, stderr = await proc.communicate()
+    assert stderr.decode() == ""
+    await task
+
+
 async def generate_certs():
     base_folder = "./certs/ssh/"
     for x in ["host_key", "host_key.pub", "client_key", "client_key.pub"]:
         if os.path.exists(f"{base_folder}{x}"):
             os.remove(f"certs/ssh/{x}")
 
-    console.info("Generating host certificates")
-    task = asyncio.create_task(asyncio.sleep(0.5))
-
-    proc = await asyncio.create_subprocess_shell(
-        f"ssh-keygen -f {base_folder}host_key -N ''",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    _, stderr = await proc.communicate()
-    assert stderr.decode() == ""
-    await task
-
-    console.info("Generating client certificates")
-    task = asyncio.create_task(asyncio.sleep(0.5))
-
-    proc = await asyncio.create_subprocess_shell(
-        f"ssh-keygen -f {base_folder}client_key -N ''",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    _, stderr = await proc.communicate()
-    assert stderr.decode() == ""
-    await task
+    console.info("Generating SSH certificates")
+    await keygen(base_folder, "host_key")
+    await keygen(base_folder, "client_key")
 
 
 async def generate_client():
