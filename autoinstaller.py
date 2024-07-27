@@ -202,6 +202,7 @@ async def get_usb_port() -> typing.Optional[str]:
         return
 
     # from dev path to /dev/tty
+    console.print()
     console.info("Looking for corresponding serial port")
     proc = await asyncio.create_subprocess_shell(
         f"udevadm info --name={dev_path} | grep DEVPATH",
@@ -224,9 +225,10 @@ async def get_usb_port() -> typing.Optional[str]:
 
         if device_name.startswith(base_device):
             console.info(f"Found serial port {device_path} for {dev_path}")
+            last_usb = dev_path
             return device_path
 
-    console.print("Device could not be found on serial ports", style="bold red")
+    console.error("No serial ports found for that device!\n")
     return None
 
 
