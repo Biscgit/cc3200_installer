@@ -578,13 +578,54 @@ async def main():
     print_welcome()
 
     # ask which mode user wants
-    option = await setup()
-    console.print("\nStarting installation", style="bold steel_blue1")
+    await print_description()
+    while True:
+        option = (await setup()).lower()
 
-    if option == "1":
-        # generate script and launch server
-        await generate_scripts()
-        await WebServer.start_server()
+        if option == "1":
+            if cc is None:
+                console.print(
+                    "\n[bold yellow1]This cannot be executed because the required custom cc3200tool "
+                    "is not installed![/bold yellow1]\n"
+                    "[bold]Do you want to download it? [[green4]y[/green4]/[red3]N[/red3]] [/bold]",
+                    end=" "
+                )
+                choice = await loop.run_in_executor(None, input)
+                if choice.lower() == "y":
+                    with console.status(
+                            "[bold green4]    Installing cc3200tool...",
+                            spinner="bouncingBar"
+                    ):
+                        console.info("Downloading Biscgit/cc3200tool")
+                        proc = await asyncio.create_subprocess_shell(
+                            "git clone --quiet https://github.com/Biscgit/cc3200tool.git",
+                        )
+                        await proc.wait()
+
+                        console.info("Installed cc3200tool module")
+
+                    console.print("[bold]Please restart the application manually.[/bold]\n")
+                    exit(0)
+
+                else:
+                    console.info("Installation cancelled\n")
+                    continue
+
+            usb_port = await get_usb_port()
+            if usb_port is None:
+                continue
+
+            await dump_certificates(usb_port)
+
+        elif option == "2":
+            console.print(f"\n{circuit}\n")
+
+        elif option == "3":
+            console.print("\nStarting installation", style="bold steel_blue1")
+            # generate script and launch server
+            await generate_scripts()
+            await WebServer.start_server()
+            await run_cloud_install()
 
     elif option == "2":
         # only generate a script
