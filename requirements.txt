@@ -1,0 +1,5 @@
+aiofiles>=23.2.1
+aiohttp>=3.9.5
+asyncssh>=2.14.2
+pyserial>=3.5
+rich>=13.7.1
