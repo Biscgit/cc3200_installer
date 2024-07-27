@@ -109,8 +109,8 @@ async def setup() -> str:
         "Easy cloud deploy\n"
         "[bold](4)[/bold] "
         "Manual cloud deploy\n"
-        "[bold](5)[/bold] "
-        "Flash cloud certificate\n"
+        f"[{can_dump}][bold](5)[/bold] "
+        f"Flash cloud certificate[/{can_dump}]\n"
         "[bold](Q)[/bold] "
         "Exit installation script[/grey82]\n\n"
         "[bold]Enter here[/bold] (default q):",
