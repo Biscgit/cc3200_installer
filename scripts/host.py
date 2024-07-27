@@ -560,6 +560,20 @@ async def generate_scripts():
         await generate_client()
 
 
+async def run_cloud_install():
+    # wait for the client to connect
+    client_addr = await get_client_broadcast()
+
+    if WebServer.is_running is True:
+        await WebServer.stop_server()
+
+    try:
+        await run_client(*client_addr)
+
+    except (OSError, asyncssh.Error) as exc:
+        console.error('Error connecting to server: ' + str(exc))
+
+
 async def main():
     print_welcome()
 
@@ -584,20 +598,8 @@ async def main():
         console.print("[red]invalid option[/red]\nexiting...")
         exit(1)
 
-    # wait for the client to connect
-    client_addr = await get_client_broadcast()
-
-    if WebServer.is_running is True:
-        await WebServer.stop_server()
-
-    try:
-        await run_client(*client_addr)
-    except (OSError, asyncssh.Error) as exc:
-        print('Error connecting to server: ' + str(exc))
-
 
 if __name__ == '__main__':
-    console.log("Welcome!")
     loop = asyncio.new_event_loop()
 
     try:
@@ -609,5 +611,5 @@ if __name__ == '__main__':
     finally:
         loop.close()
 
-    console.log("Programm finished")
+    console.log("Program finished")
     exit(0)
