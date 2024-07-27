@@ -109,7 +109,9 @@ async def setup() -> str:
         "Easy cloud deploy\n"
         "[bold](4)[/bold] "
         "Manual cloud deploy\n"
-        "[bold](q)[/bold] "
+        "[bold](5)[/bold] "
+        "Flash cloud certificate\n"
+        "[bold](Q)[/bold] "
         "Exit installation script[/grey82]\n\n"
         "[bold]Enter here[/bold] (default q):",
         end=" "
@@ -644,6 +646,44 @@ async def run_cloud_install():
         console.error('Error connecting to server: ' + str(exc))
 
 
+async def flash_cloud_cert(path: str):
+    console.print("\nFlashing cloud certificate", style="bold steel_blue1")
+    console.print(
+        "\n[bold red3]WARNING: THIS WILL OVERWRITE THE EXISTING CERTIFICATE!\n"
+        "IF YOU HAVE NOT BACKED IT UP, IT WILL BE LOST FOREVER![/bold red3]"
+        "Type [bold]i understand[/bold] to continue:",
+    )
+    choice = await loop.run_in_executor(None, input)
+    if choice.lower() != "i understand":
+        console.error("Aborting operation")
+        return
+
+    cert_path = "./certs/cloud/ca.der"
+    if not os.path.exists(cert_path):
+        console.error("No cloud certificate found. Place one at `./certs/cloud/ca.der`")
+        return
+
+    console.info("Found cloud certificate ca.der")
+
+    console.print(
+        "\nConnect the Toniebox and press enter to continue...",
+        style="bold steel_blue1",
+        end=" ",
+    )
+    await loop.run_in_executor(None, input)
+    with console.status(
+            "[bold green4]    Flashing cloud certificate using modified cc3200tool",
+            spinner="bouncingBar"
+    ):
+        command = (
+            f"-p {path} "
+            f"--reset dtr "
+            f"write_file certs/server/ca.der /certs/cloud/ca.der"
+        )
+
+        return await run_cc_command(command, "Failed to flash certificate to device.")
+
+
 async def check_cc_prompt() -> bool:
     if cc is None:
         console.print(
@@ -707,6 +747,14 @@ async def main():
             # only generate a script
             await generate_scripts()
             await run_cloud_install()
+
+        elif option == "5":
+            if await check_cc_prompt():
+                usb_port = await get_usb_port()
+                if usb_port is None:
+                    continue
+
+                await flash_cloud_cert(usb_port)
 
         elif option in ["q", "exit", "quit", "stop"]:
             console.info("Exiting...")
