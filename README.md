@@ -14,6 +14,9 @@ With this project, we can simplify many common steps!
 - a diagram to help connect the UART TC2050 cable for firmware dumps
 
 ## Installation
+> [!NOTE]
+> Currently only Linux is supported because of the path and `udevadm` features.
+
 Install the required packages from `requirements.txt` with the following command:
 ```bash
 python3 -m pip install -r requirements.txt
