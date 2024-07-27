@@ -457,7 +457,56 @@ async def run_client(address: str, port: int):
                 server_cert = bytes.fromhex(result.stdout)
                 await file.write(server_cert)
 
-                    console.log("Saved server certificate to `out/ca.der`")
+            await run_command(f"rm ca.der")
+
+            console.info(f"Transferred certificate to `{folder}ca.der`")
+
+            folder = "./certs/box/"
+            while True:
+                missing: list[str] = []
+                certs: dict[str, str] = {}
+
+                for x in ["ca.der", "client.der", "private.der"]:
+                    path = f"{folder}{x}"
+
+                    if os.path.exists(path):
+                        async with aiofiles.open(path, "rb") as f:
+                            content = await f.read()
+                            certs[x] = content.hex()
+
+                    else:
+                        missing.append(x)
+
+                if not missing:
+                    break
+
+                status.stop()
+                console.print(
+                    "\n[bold yellow1]Following client certificates are missing:[/bold yellow1]\n" +
+                    "\n∘︎ ".join(missing) + "\n",
+                    "Copy missing certificates to `./certs/box/` and press enter.\n"
+                    "Type [bold]N[/bold] to finish setup without client certificates",
+                    end=" "
+                )
+                choice = await loop.run_in_executor(None, input)
+
+                if choice.lower() == "n":
+                    console.info("Skipping client certificates")
+                    console.print("Finished installation\n", style="bold steel_blue1")
+                    return
+
+                status.start()
+
+            console.info("Loaded all required TonieBox certificates from disk")
+
+            for k, v in certs.items():
+                await run_command(f"echo {v} | xxd -r -p > {k}")
+                await run_command(f"sudo docker cp {k} teddycloud:/teddycloud/certs/client/{k}")
+                await run_command(f"rm {k}")
+
+                console.info(f"Transferred certificate `{folder}{k}`")
+
+            console.print("Finished installation\n", style="bold steel_blue1")
 
 
 async def generate_certs():
