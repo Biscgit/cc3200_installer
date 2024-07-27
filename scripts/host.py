@@ -85,23 +85,39 @@ def print_welcome() -> None:
     console.print(logo)
 
 
-async def setup() -> str:
+async def print_description():
     console.print(
-        "Welcome to the TonieCloud installer!\n"
+        "[bold]Welcome to the TeddyCloud installer![/bold]\n"
         "This script will make your life as easy as possible.\n"
-        "Ensure your server is running a debian based distro (like RaspbianOS).\n\n"
+        "It works on Linux and only with the CC3200 Box!\n"
+        "Ensure your server is running a debian based distro (like RaspbianOS).\n"
+        "The author recommends a fresh RaspbianOS installation\n"
+    )
+
+
+async def setup() -> str:
+    can_dump = "grey42" if cc is None else "grey82"
+    console.print(
         "[bold steel_blue1]Choose an Option to continue:[/bold steel_blue1]\n"
-        "[bold][1] (recommended)[/bold]:\n"
-        "Easy script deploy\n"
-        "[bold][2][/bold]:\n"
-        "I can deploy the script on the server on my own\n"
-        "[bold]\[q][/bold]:\n"  # noqa
-        "Exist installation script\n\n"
-        "[bold]Enter here[/bold] (default 1):",
+        f"[{can_dump}][bold](1)[/bold] "
+        f"Dump certificates from TonieBox[/{can_dump}]\n"
+        "[grey82][bold](2)[/bold] "
+        "Launch connector helper (TC2050)\n"
+        "[bold](3)[/bold] "
+        "Easy cloud deploy\n"
+        "[bold](4)[/bold] "
+        "Manual cloud deploy\n"
+        "[bold](q)[/bold] "
+        "Exit installation script[/grey82]\n\n"
+        "[bold]Enter here[/bold] (default q):",
         end=" "
     )
-    user_input = await loop.run_in_executor(None, input) or "1"
-    return user_input
+    try:
+        user_input = await loop.run_in_executor(None, input) or "q"
+        return user_input
+
+    except KeyboardInterrupt:
+        return "q"
 
 
 class WebServer:
