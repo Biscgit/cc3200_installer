@@ -15,9 +15,41 @@ import asyncssh
 from rich.console import Console
 from rich.panel import Panel
 
-logger = logging.getLogger(__name__)
-console = Console()
+try:
+    cc = importlib.import_module("cc3200tool.cc3200tool.cc")
+except ModuleNotFoundError:
+    cc = None
 
+
+class ConsoleLogger(Console):
+    DEBUG = False
+
+    def debug(self, text: str, *form):
+        if ConsoleLogger.debug:
+            if form:
+                text %= form
+            self.log(f"[grey66]{text}[/grey66]")
+
+    def info(self, text: str, *form):
+        if form:
+            text %= form
+        self.log(f"[grey82]{text}[/grey82]")
+
+    def warning(self, text: str, *form):
+        if form:
+            text %= form
+        self.log(f"[yellow1][bold]Warning:[/bold] {text}[/yellow1]")
+
+    def warn(self, text: str, *form):
+        self.warning(text, *form)
+
+    def error(self, text: str, *form):
+        if form:
+            text %= form
+        self.log(f"[red1][bold]Error:[/bold] {text}[/red1]")
+
+
+console = ConsoleLogger()
 broadcast_port = 37021
 
 logo = r"""
@@ -77,7 +109,7 @@ class WebServer:
 
     @staticmethod
     async def download_script(request: web.Request):
-        console.log(f"Request for download from host: {request.headers.get('Host')}")
+        console.info(f"Request for download from host: {request.headers.get('Host')}")
 
         path = "out/client.sh"
         headers = {'Content-Disposition': 'attachment; filename="run.sh"'}
@@ -86,7 +118,7 @@ class WebServer:
 
     @staticmethod
     async def start_server():
-        console.log("Starting file server")
+        console.info("Starting file server")
 
         app = web.Application()
         app.router.add_get("/install.sh", WebServer.download_script)
@@ -127,7 +159,7 @@ class WebServer:
             WebServer.runner = None
 
         WebServer.is_running = False
-        console.log("Terminated and cleaned up webserver")
+        console.info("Terminated and cleaned up webserver")
 
 
 async def get_client_broadcast() -> tuple[str, int]:
@@ -140,7 +172,7 @@ async def get_client_broadcast() -> tuple[str, int]:
     try:
         with console.status("[bold green4]", spinner="bouncingBar") as status:
             await asyncio.sleep(1 - (time.time() % 1))
-            console.log("Started client listener")
+            console.info("Started client listener")
             status.update(status="[bold green4]    Waiting for client message...")
 
             message, _ = await loop.run_in_executor(None, sock.recvfrom, 4096)
@@ -148,7 +180,7 @@ async def get_client_broadcast() -> tuple[str, int]:
 
             if body.get("can_accept") is True:
                 data = body["ip"], body["port"]
-                console.log(f"Found ssh client on {data[0]}:{data[1]}")
+                console.info(f"Found ssh client on {data[0]}:{data[1]}")
 
                 return data
 
@@ -157,7 +189,7 @@ async def get_client_broadcast() -> tuple[str, int]:
 
 
 async def run_client(address: str, port: int):
-    console.log("Running commands for installation")
+    console.info("Running commands for installation")
 
     async with aiofiles.open("certs/client_key", "r") as file:
         client_key = await file.read()
@@ -175,22 +207,22 @@ async def run_client(address: str, port: int):
         ) as conn:
             async def run_command(command: str, log: str = None, fail_all: bool = True) -> asyncssh.SSHCompletedProcess:
                 if log:
-                    console.log(log)
+                    console.info(log)
 
-                result = await conn.run(command)
+                command_result = await conn.run(command)
 
-                if result.stderr and fail_all:
-                    console.log(f"ERROR: {result.stderr}")
-                    console.log("Exiting programm...")
+                if command_result.stderr and fail_all:
+                    console.error(command_result.stderr)
+                    console.error("Exiting program...")
                     exit(1)
 
-                return result
+                return command_result
 
             await run_command("ping -c 1 duckduckgo.com", log="Checking internet connection")
             res = await run_command("sudo docker -v", log="Checking docker")
 
             if "command not found" in res.stdout:
-                console.log("Docker not found. Installing...")
+                console.info("Docker not found. Installing...")
                 commands = [
                     # remove false packages
                     "for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; "
@@ -217,14 +249,14 @@ async def run_client(address: str, port: int):
 
                 res = await run_command("sudo docker -v", log="Checking docker")
                 if "command not found" in res.stdout:
-                    console.log("Failed to install docker. Please check manually")
-                    console.log("Exiting...")
+                    console.error("Failed to install docker. Please check manually")
+                    console.info("Exiting program...")
                     exit(1)
 
-                console.log("Successfully installed docker")
+                console.info("Successfully installed docker")
 
-            console.log("Installing TeddyCloud & Web Interface")
-            #  await run_command("DIRECTORY INTO teddy_cloud")
+            console.info("Installing TeddyCloud & Web Interface")
+            await run_command("DIRECTORY INTO teddy_cloud")
             await run_command("curl -o docker-compose.yaml -s https://raw.githubusercontent.com/"
                               "toniebox-reverse-engineering/teddycloud/master/docker/docker-compose.yaml")
 
@@ -233,7 +265,7 @@ async def run_client(address: str, port: int):
             await run_command('sed -i "9s/#//" "docker-compose.yaml"')
             await run_command('sed -i "1d" docker-compose.yaml')
 
-            console.log("Starting TeddyCloud")
+            console.info("Starting TeddyCloud")
             await run_command("sudo docker compose up -d --quiet-pull")
 
             async with aiohttp.ClientSession() as s:
@@ -244,8 +276,10 @@ async def run_client(address: str, port: int):
                         async with s.get(f"http://{address}") as r:
                             text = await r.text()
                             if "TeddyCloud administration interface" in text:
-                                console.log("Cloud is running")
-                                console.log(f"Check: http://{address}/web")
+                                console.info(
+                                    f"Cloud is running [bold]on http://{address}/web[/bold]\n"
+                                    "You can stop it with `sudo docker compose -f teddy_cloud/docker-compose.yaml down`"
+                                )
                                 break
 
                     except (aiohttp.InvalidURL, aiohttp.ClientConnectionError):
@@ -253,13 +287,13 @@ async def run_client(address: str, port: int):
                         max_tries -= 1
 
                 else:
-                    console.log("Failed to start cloud within 120 seconds. Please check manually")
-                    console.log("Exiting...")
+                    console.error("Failed to start cloud within 120 seconds. Please check manually")
+                    console.error("Exiting program...")
                     exit(1)
 
-                console.log("Exchanging certificates")
-                await run_command("sudo docker cp teddycloud:/teddycloud/certs/server/ca.der ca.der")
-                result = await run_command("cat ca.der")
+            console.info("Exchanging certificates")
+            await run_command("sudo docker cp teddycloud:/teddycloud/certs/server/ca.der ca.der")
+            result = await run_command("cat ca.der")
 
                 async with aiofiles.open("out/ca.der", "wb") as file:
                     server_cert = bytes.fromhex(result.stdout)
@@ -273,7 +307,7 @@ async def generate_certs():
         if os.path.exists(f"certs/{x}"):
             os.remove(f"certs/{x}")
 
-    console.log("Generating host certificates")
+    console.info("Generating host certificates")
     task = asyncio.create_task(asyncio.sleep(0.5))
 
     proc = await asyncio.create_subprocess_shell(
@@ -285,7 +319,7 @@ async def generate_certs():
     assert stderr.decode() == ""
     await task
 
-    console.log("Generating client certificates")
+    console.info("Generating client certificates")
     task = asyncio.create_task(asyncio.sleep(0.5))
 
     proc = await asyncio.create_subprocess_shell(
@@ -303,7 +337,7 @@ async def generate_client():
         if os.path.exists(f"out/{x}"):
             os.remove(f"out/{x}")
 
-    console.log("Generating installer script")
+    console.info("Generating installer script")
     task = asyncio.create_task(asyncio.sleep(0.5))
 
     async with aiofiles.open("certs/host_key", "r") as f:
@@ -358,8 +392,8 @@ async def generate_scripts():
             "[bold green4]    Generating scripts...",
             spinner="bouncingBar"
     ):
-        console.log("Creating folders")
-        Path("./certs").mkdir(parents=True, exist_ok=True)
+        console.info("Creating folders")
+        Path("./certs/ssh").mkdir(parents=True, exist_ok=True)
         Path("./out").mkdir(parents=True, exist_ok=True)
 
         await generate_certs()
