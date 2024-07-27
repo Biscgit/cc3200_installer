@@ -627,17 +627,19 @@ async def main():
             await WebServer.start_server()
             await run_cloud_install()
 
-    elif option == "2":
-        # only generate a script
-        await generate_scripts()
+        elif option == "4":
+            console.print("\nStarting installation", style="bold steel_blue1")
+            # only generate a script
+            await generate_scripts()
+            await run_cloud_install()
 
-    elif option == "q":
-        console.log("Existing...")
-        exit(0)
+        elif option in ["q", "exit", "quit", "stop"]:
+            console.info("Exiting...")
+            exit(0)
 
-    else:
-        console.print("[red]invalid option[/red]\nexiting...")
-        exit(1)
+        else:
+            console.error("Invalid option\nExiting program...")
+            exit(1)
 
 
 if __name__ == '__main__':
