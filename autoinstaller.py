@@ -195,12 +195,12 @@ async def get_usb_port() -> typing.Optional[str]:
         return None
 
     console.print(f"[bold]Enter here[/bold] (default {default}):", end=" ")
+    user_input = await loop.run_in_executor(None, input) or default.__str__()
     try:
-        user_input = await loop.run_in_executor(None, input) or default.__str__()
         dev_path = devices[int(user_input) - 1]
 
     except (IndexError, TypeError, ValueError):
-        console.print("Invalid option\n", style="bold red")
+        console.error(f"Invalid option: {user_input}\n")
         return
 
     except KeyboardInterrupt:
