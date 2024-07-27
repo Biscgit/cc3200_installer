@@ -114,6 +114,8 @@ async def setup() -> str:
         "Manual cloud deploy\n"
         f" [{can_dump}][bold]([{number_color}]5[/{number_color}])[/bold] "
         f"Flash cloud certificate[/{can_dump}]\n"
+        f" [{can_dump}][bold]([{number_color}]F[/{number_color}])[/bold] "
+        f"Full installation helper[/{can_dump}]\n"
         " [bold]([steel_blue1]Q[/steel_blue1])[/bold] "
         "Exit installation script[/grey82]\n\n"
         "[bold]Enter here[/bold] (default q):",
@@ -719,6 +721,15 @@ async def check_cc_prompt() -> bool:
     return True
 
 
+async def enter_to_continue(message: str = "press enter to continue..."):
+    console.print(
+        message,
+        style="bold steel_blue1",
+        end=" ",
+    )
+    await loop.run_in_executor(None, input)
+
+
 async def main():
     print_welcome()
 
@@ -739,14 +750,14 @@ async def main():
             console.print(f"\n{circuit}\n")
 
         elif option == "3":
-            console.print("\nStarting installation", style="bold steel_blue1")
+            console.print("\nStarting cloud installation", style="bold steel_blue1")
             # generate script and launch server
             await generate_scripts()
             await WebServer.start_server()
             await run_cloud_install()
 
         elif option == "4":
-            console.print("\nStarting installation", style="bold steel_blue1")
+            console.print("\nStarting cloud installation", style="bold steel_blue1")
             # only generate a script
             await generate_scripts()
             await run_cloud_install()
@@ -758,6 +769,39 @@ async def main():
                     continue
 
                 await flash_cloud_cert(usb_port)
+
+        elif option in ["f", "full", "a", "all"]:
+            console.print("\nStarting full installation", style="bold steel_blue1")
+
+            # circuit
+            console.print(f"\n{circuit}\n")
+            await enter_to_continue()
+
+            # dump certificates
+            if await check_cc_prompt():
+                usb_port = await get_usb_port()
+                if usb_port is None:
+                    continue
+
+                await dump_certificates(usb_port)
+                await enter_to_continue()
+
+                # install cloud
+                console.print("\nStarting cloud installation", style="bold steel_blue1")
+                await generate_scripts()
+                await WebServer.start_server()
+                await run_cloud_install()
+
+                # flash cloud certificate
+                usb_port = await get_usb_port()
+                if usb_port is None:
+                    continue
+
+                await flash_cloud_cert(usb_port)
+
+                console.print("\nAll done!", style="bold steel_blue1")
+                await enter_to_continue("press enter to exit...")
+                exit(0)
 
         elif option in ["q", "exit", "quit", "stop"]:
             console.info("Exiting...")
