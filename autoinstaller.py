@@ -659,12 +659,13 @@ async def flash_cloud_cert(path: str):
     console.print("\nFlashing cloud certificate", style="bold steel_blue1")
     console.print(
         "\n[bold red3]WARNING: THIS WILL OVERWRITE THE EXISTING CERTIFICATE!\n"
-        "IF YOU HAVE NOT BACKED IT UP, IT WILL BE LOST FOREVER![/bold red3]"
+        "IF YOU HAVE NOT BACKED IT UP, IT WILL BE LOST FOREVER![/bold red3]\n"
         "Type [bold]i understand[/bold] to continue:",
+        end=" ",
     )
     choice = await loop.run_in_executor(None, input)
     if choice.lower() != "i understand":
-        console.error("Aborting operation")
+        console.error("Aborting operation\n")
         return
 
     cert_path = "./certs/cloud/ca.der"
@@ -687,7 +688,7 @@ async def flash_cloud_cert(path: str):
         command = (
             f"-p {path} "
             f"--reset dtr "
-            f"write_file certs/server/ca.der /certs/cloud/ca.der"
+            f"write_file certs/cloud/ca.der /certs/server/ca.der"
         )
 
         return await run_cc_command(command, "Failed to flash certificate to device.")
