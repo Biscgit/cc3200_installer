@@ -136,7 +136,7 @@ async def get_usb_port() -> typing.Optional[str]:
     global last_usb
     if last_usb:
         console.print(
-            f"\nPreviously selected device on `{last_usb}`. "
+            f"\nPreviously selected device on `{last_usb}`\n"
             "[bold]Use that? [[green4]Y[/green4]/[red3]n[/red3]] [/bold]",
             end=""
         )
@@ -232,7 +232,7 @@ async def get_usb_port() -> typing.Optional[str]:
 
         if device_name.startswith(base_device):
             console.info(f"Found serial port {device_path} for {dev_path}")
-            last_usb = dev_path
+            last_usb = device_path
             return device_path
 
     console.error("No serial ports found for that device!\n")
@@ -458,12 +458,14 @@ async def run_client(address: str, port: int):
             await run_command('sed -i "1d" docker-compose.yaml')
 
             console.info("Starting TeddyCloud")
+            status.update("[bold green4]    Waiting for TeddyCloud to start...[/bold green4]")
             await run_command("sudo docker compose up -d --quiet-pull")
 
             async with aiohttp.ClientSession() as s:
                 max_tries = 60
 
                 while max_tries > 0:
+                    console.debug("Trying to connect to cloud")
                     try:
                         async with s.get(f"http://{address}") as r:
                             text = await r.text()
@@ -483,7 +485,9 @@ async def run_client(address: str, port: int):
                     console.error("Exiting program...")
                     exit(1)
 
-            console.info("Exchanging certificates")
+            status.update("[bold green4]    Exchanging certificates...[/bold green4]")
+
+            console.info("Uploading certificate")
             await run_command("sudo docker cp teddycloud:/teddycloud/certs/server/ca.der ca.der")
             result = await run_command("cat ca.der")
 
