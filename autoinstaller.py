@@ -418,6 +418,12 @@ async def run_client(address: str, port: int):
 
             if "command not found" in res.stdout:
                 console.info("Docker not found. Installing...")
+
+                res = await run_command("uname -a")
+                arch = res.stdout.lower()
+                arch = "amd64" if "x86_64" in arch else "i386"
+                console.info(f"Found architecture {arch}")
+
                 commands = [
                     # remove false packages
                     "for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; "
@@ -429,8 +435,8 @@ async def run_client(address: str, port: int):
                     "sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc",
                     "sudo chmod a+r /etc/apt/keyrings/docker.asc",
                     # setup repo
-                    r"""echo \
-                    "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+                    fr"""echo \
+                    "deb [arch={arch} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
                     $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
                     sudo tee /etc/apt/sources.list.d/docker.list > /dev/null""",
                     "sudo apt-get update",
