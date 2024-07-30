@@ -337,7 +337,7 @@ class WebServer:
 
         console.log(Panel(
             "[bold]Copy following command and execute it on your server.[/bold]\n\n"
-            f"\t[bold bright_white]curl -s http://{ip_address}:{port}/install.sh | bash[/bold bright_white]\n\n"
+            f"\t[bold bright_white]curl -s {ip_address}:{port}/install.sh | bash[/bold bright_white]\n\n"
             "You might get promoted to enter your admin password to install missing packages or libraries.",
             expand=False,
         ))
