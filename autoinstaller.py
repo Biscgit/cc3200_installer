@@ -526,10 +526,10 @@ async def run_client(address: str, port: int):
                 status.stop()
                 console.print(
                     "\n[bold yellow1]Following client certificates are missing:[/bold yellow1]\n" +
-                    "\n∘︎ ".join(missing) + "\n",
+                    "\n".join(f"∘︎ {missing}") + "\n" +
                     "Copy missing certificates to `./certs/box/` and press enter.\n"
                     "Type [bold]N[/bold] to finish setup without client certificates",
-                    end="",
+                    end=" ",
                 )
                 choice = await loop.run_in_executor(executor, input)
 
