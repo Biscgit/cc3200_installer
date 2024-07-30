@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import importlib
 import json
 import os
@@ -17,6 +18,8 @@ import asyncssh
 from rich.console import Console
 from rich.panel import Panel
 
+executor = ThreadPoolExecutor(max_workers=5)
+
 try:
     cc = importlib.import_module("cc3200tool.cc3200tool.cc")
 except ModuleNotFoundError:
@@ -27,7 +30,7 @@ class ConsoleLogger(Console):
     DEBUG = False
 
     def debug(self, text: str, *form):
-        if ConsoleLogger.debug:
+        if ConsoleLogger.DEBUG:
             if form:
                 text %= form
             self.log(f"[grey66]{text}[/grey66]")
@@ -122,7 +125,7 @@ async def setup() -> str:
         end=" "
     )
     try:
-        user_input = await loop.run_in_executor(None, input) or "q"
+        user_input = await loop.run_in_executor(executor, input) or "q"
         return user_input
 
     except KeyboardInterrupt:
@@ -140,7 +143,7 @@ async def get_usb_port() -> typing.Optional[str]:
             "[bold]Use that? [[green4]Y[/green4]/[red3]n[/red3]] [/bold]",
             end=""
         )
-        choice = await loop.run_in_executor(None, input)
+        choice = await loop.run_in_executor(executor, input)
         if choice.lower() == "y" or choice == "":
             return last_usb
 
@@ -153,7 +156,7 @@ async def get_usb_port() -> typing.Optional[str]:
         style="bold steel_blue1",
         end=" ",
     )
-    await loop.run_in_executor(None, input)
+    await loop.run_in_executor(executor, input)
 
     console.info("Searching for usb devices")
     proc = await asyncio.create_subprocess_shell(
@@ -197,7 +200,7 @@ async def get_usb_port() -> typing.Optional[str]:
         return None
 
     console.print(f"[bold]Enter here[/bold] (default {default}):", end=" ")
-    user_input = await loop.run_in_executor(None, input) or default.__str__()
+    user_input = await loop.run_in_executor(executor, input) or default.__str__()
     try:
         dev_path = devices[int(user_input) - 1]
 
@@ -242,7 +245,7 @@ async def get_usb_port() -> typing.Optional[str]:
 async def run_cc_command(command: str, error_msg: str, last_command: bool = True) -> bool:
     try:
         await loop.run_in_executor(
-            None,
+            executor,
             cc.main,
             command.split(" "),
             console,
@@ -271,7 +274,7 @@ async def dump_certificates(path: str) -> bool:
         style="bold steel_blue1",
         end=" ",
     )
-    await loop.run_in_executor(None, input)
+    await loop.run_in_executor(executor, input)
     with console.status(
             "[bold green4]    Dumping files using modified cc3200tool",
             spinner="bouncingBar"
@@ -367,7 +370,7 @@ async def get_client_broadcast() -> tuple[str, int]:
             console.info("Started client listener")
             status.update(status="[bold green4]    Waiting for client message...")
 
-            message, _ = await loop.run_in_executor(None, sock.recvfrom, 4096)
+            message, _ = await loop.run_in_executor(executor, sock.recvfrom, 4096)
             body = json.loads(message)
 
             if body.get("can_accept") is True:
@@ -528,7 +531,7 @@ async def run_client(address: str, port: int):
                     "Type [bold]N[/bold] to finish setup without client certificates",
                     end="",
                 )
-                choice = await loop.run_in_executor(None, input)
+                choice = await loop.run_in_executor(executor, input)
 
                 if choice.lower() == "n":
                     console.info("Skipping client certificates")
@@ -663,7 +666,7 @@ async def flash_cloud_cert(path: str):
         "Type [bold]i understand[/bold] to continue:",
         end=" ",
     )
-    choice = await loop.run_in_executor(None, input)
+    choice = await loop.run_in_executor(executor, input)
     if choice.lower() != "i understand":
         console.error("Aborting operation\n")
         return
@@ -680,7 +683,7 @@ async def flash_cloud_cert(path: str):
         style="bold steel_blue1",
         end=" ",
     )
-    await loop.run_in_executor(None, input)
+    await loop.run_in_executor(executor, input)
     with console.status(
             "[bold green4]    Flashing cloud certificate using modified cc3200tool",
             spinner="bouncingBar"
@@ -732,7 +735,7 @@ async def enter_to_continue(message: str = "press enter to continue..."):
         style="bold steel_blue1",
         end=" ",
     )
-    await loop.run_in_executor(None, input)
+    await loop.run_in_executor(executor, input)
 
 
 async def main():
@@ -824,6 +827,7 @@ if __name__ == '__main__':
         loop.run_until_complete(main())
 
     except KeyboardInterrupt:
+        executor.shutdown(wait=False, cancel_futures=True)
         loop.stop()
 
     finally:
